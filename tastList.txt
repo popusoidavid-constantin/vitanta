@@ -1,0 +1,8 @@
+1. Create Mood register
+2. Make sure that mood level is working
+2. test today mood if still works
+3. Tap for mood boost ai integration
+4. Mood Boost messages in db collection (and hook for create mood boost, read mood boost)
+5. Excellent Day in DB collection (createExcellentDay, deleteExcellentDay)
+6. Create a function that returns mood registers in the last week
+7. Weekley Progress Based on last week stats
