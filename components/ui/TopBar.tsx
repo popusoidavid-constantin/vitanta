@@ -37,8 +37,6 @@ const TopBar = () => {
     }
   };
 
-  console.log(image);
-
   return (
     <ThemedView style={styles.mainContainer}>
       <View style={styles.leftContainer}>

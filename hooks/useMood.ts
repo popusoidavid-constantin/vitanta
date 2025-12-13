@@ -1,8 +1,8 @@
-import { auth, db, DB_ID, MOOD_REGISTERS_COLLECTION_ID, query } from "@/appwrite";
+import { auth, db, DB_ID, id, MOOD_REGISTERS_COLLECTION_ID, query } from "@/appwrite";
 import { toMoodRegister } from "@/helpers/dbHelpers";
-import { HookResponse, Mood_Register } from "@/models/types";
+import { HookResponse, Mood_Register, Mood_Register_DB } from "@/models/types";
 import { useAppDispatch } from "@/store/hooks";
-import { setMoods } from "@/store/slices/moodSlice";
+import { addMood, setMoods } from "@/store/slices/moodSlice";
 import { useCallback } from "react";
 
 const useMood = () => {
@@ -38,7 +38,38 @@ const useMood = () => {
     }
   }, []);
 
-  return { getMyRegisteredMoods };
+  const createRegisterMood = useCallback(async (newMoodReg: Mood_Register_DB): Promise<HookResponse> => {
+    try {
+      const response = await db.createRow({
+        databaseId: DB_ID,
+        tableId: MOOD_REGISTERS_COLLECTION_ID,
+        rowId: id.unique(),
+        data: newMoodReg,
+      });
+
+      const mood = toMoodRegister(response);
+
+      dispatch(addMood(mood));
+
+      await getMyRegisteredMoods();
+
+      return {
+        success: true,
+        message: "Mood registered successfully!",
+        data: mood,
+      };
+    } catch (error: any) {
+      console.log("Error adding the reg mood", error);
+
+      return {
+        success: false,
+        message: "Mood register error!",
+        data: null,
+      };
+    }
+  }, []);
+
+  return { getMyRegisteredMoods, createRegisterMood };
 };
 
 export default useMood;

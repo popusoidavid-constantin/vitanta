@@ -7,6 +7,7 @@ import "react-native-reanimated";
 import useAuth from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Provider } from "react-redux";
 
 const AppContainer = () => {
@@ -29,11 +30,13 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <Provider store={store}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <StatusBar style="auto" />
-        <AppContainer />
-      </ThemeProvider>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <StatusBar style="auto" />
+          <AppContainer />
+        </ThemeProvider>
+      </Provider>
+    </GestureHandlerRootView>
   );
 }

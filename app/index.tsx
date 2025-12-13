@@ -1,3 +1,4 @@
+import Loading from "@/components/Loading";
 import MyMainButton from "@/components/MyMainButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -5,20 +6,27 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { useAppSelector } from "@/store/hooks";
 import globalStyles from "@/styles/globalStyles";
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Welcome() {
+  const [loading, setLoading] = useState(false);
   const navi = useRouter();
   const ghostColor = useThemeColor({}, "ghostText");
   const isAuth = useAppSelector((state) => state.authState.isAuth);
 
   useEffect(() => {
+    setLoading(true);
     if (isAuth) {
       navi.replace("/(tabs)");
+      setLoading(false);
     }
   }, [isAuth]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (isAuth) {
     return null;

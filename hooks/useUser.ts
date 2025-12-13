@@ -60,6 +60,7 @@ const useUser = () => {
       };
     }
   };
+
   const updateUserData = async (updatedUserPart: Partial<User>): Promise<HookResponse> => {
     try {
       const currentUser = await auth.get();

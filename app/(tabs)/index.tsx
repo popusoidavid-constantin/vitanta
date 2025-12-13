@@ -1,49 +1,118 @@
-import MyTextInput from "@/components/MyTextInput";
-import { ThemedText } from "@/components/themed-text";
+import AddTodayMoodCard from "@/components/cards/AddTodayMoodCard";
+import RegisterMoodCard from "@/components/cards/RegisterMoodCard";
+import SaveToday from "@/components/cards/SaveToday";
+import TodayMoodNote from "@/components/cards/TodayMoodNote";
+import TodayMoodPtg from "@/components/cards/TodayMoodPtg";
+import WeekleyStatsCard from "@/components/cards/WeekleyStatsCard";
 import { ThemedView } from "@/components/themed-view";
 import ActionCard from "@/components/tracker/ActionCard";
-import SelectMoodPtg from "@/components/tracker/SelectMoodPtg";
-import MyOutlinedButton from "@/components/ui/MyOutlinedButton";
 import TopBar from "@/components/ui/TopBar";
+import { useTodayMood } from "@/helpers/appFunctions";
+import useMood from "@/hooks/useMood";
+import { Mood_Register_DB } from "@/models/types";
+import { useAppSelector } from "@/store/hooks";
 import globalStyles from "@/styles/globalStyles";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { LineChart } from "react-native-chart-kit";
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Circle, Svg } from "react-native-svg";
 
+const MOOD_RING = {
+  size: 120,
+  strokeWidth: 10,
+};
+
+const getRingMetrics = (score = 0) => {
+  const radius = (MOOD_RING.size - MOOD_RING.strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+
+  return { radius, circumference, progress };
+};
+
 const HomeScreen = () => {
+  const navi = useRouter();
+  const user = useAppSelector((state) => state.user);
+  //
   const size = 120;
   const strokeWidth = 10;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const screenWidth = Dimensions.get("window").width;
+  const todayMood = useTodayMood();
+  const moodScore = todayMood?.score ?? 0;
+  const { radius, circumference, progress } = getRingMetrics(moodScore);
+
+  //
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [moodCard, setMoodCard] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [moodPtg, setMoodPtg] = useState<number>(todayMood?.score || 0);
   const [refreshing, setRefreshing] = useState(false);
-  const { getValues, control, handleSubmit } = useForm({
+  const [loading, setLoading] = useState(false);
+  //
+  const { createRegisterMood } = useMood();
+  const { getValues, control, handleSubmit, reset } = useForm({
     defaultValues: {
-      moodMessage: "",
+      moodMessage: todayMood?.note || "",
     },
   });
 
-  const [moodCard, setMoodCard] = useState(false);
-
-  const navi = useRouter();
-  // mood data
-  const percentage = 80;
-  const progress = (percentage / 100) * circumference;
-  const todayMood = false;
-
+  //
   const onRefresh = () => {
     setRefreshing(true);
 
-    console.log("REFRESH");
     setRefreshing(false);
   };
+  //
+  const handleSelectMoodPtg = (value: number) => {
+    setMoodPtg(value);
+  };
+  //
+  const handleEditStatus = (value: boolean) => {
+    console.log(value);
+    setEditMode(value);
+  };
+  //
+  const handleRegisterMood = async () => {
+    setLoading(true);
+    try {
+      const { moodMessage } = getValues();
+      if (moodPtg === 0) {
+        Alert.alert("Whoops!", "Mood percentage must be selected first!");
+        return;
+      }
+      if (moodMessage.trim() === "") {
+        Alert.alert("Gotcha!", "You should write a little bit about today :)");
+        return;
+      }
 
-  // refactor la componente
+      const newMoodReg: Mood_Register_DB = {
+        score: moodPtg,
+        note: moodMessage,
+        date: new Date().toISOString(),
+        createdBy: user.id,
+      };
+
+      const moodRes = await createRegisterMood(newMoodReg);
+
+      if (!moodRes.success) {
+        Alert.alert("Error!", "Something went wrong, please try again later:(");
+        return;
+      }
+
+      Alert.alert("Nice!", "Your mood was successfully registered!");
+      reset();
+      return;
+    } finally {
+      setLoading(false);
+    }
+  };
+  //
+  const openSheet = () => {
+    bottomSheetRef.current?.snapToIndex(1);
+  };
 
   return (
     <ThemedView style={globalStyles.body}>
@@ -55,81 +124,37 @@ const HomeScreen = () => {
         >
           {todayMood ? (
             <>
-              <ActionCard dimension={1} height={1} color={"#0A52E2"}>
-                <View style={{ paddingHorizontal: 10 }}>
-                  <Text style={styles.title}>Today Mood Percentage</Text>
-                  <View style={styles.circleContainer}>
-                    <Svg width={size} height={size}>
-                      <Circle stroke="#1E40AF" fill="none" cx={size / 2} cy={size / 2} r={radius} strokeWidth={strokeWidth} />
-                      <View style={styles.percentageContainer}>
-                        <Text style={styles.percentageText}>{percentage}%</Text>
-                      </View>
-                      <Circle
-                        stroke="#FFFFFF"
-                        fill="none"
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        strokeDasharray={`${circumference} ${circumference}`}
-                        strokeDashoffset={circumference - progress}
-                        strokeLinecap="round"
-                        strokeWidth={strokeWidth}
-                        rotation="-90"
-                        origin={`${size / 2}, ${size / 2}`}
-                      />
-                    </Svg>
-                  </View>
-                </View>
-              </ActionCard>
+              <TodayMoodPtg
+                size={size}
+                radius={radius}
+                circumference={circumference}
+                progress={progress}
+                todayMood={todayMood}
+                strokeWidth={strokeWidth}
+              />
 
-              <ActionCard dimension={1} height={1} color={"#2075A3"}>
-                <View style={styles.noteContainer}>
-                  <Text style={styles.title}>Today Mood Note</Text>
-                  <ThemedText style={styles.para}>Lorem Ipsum is simply dummy text of the printing and typesetting industry.</ThemedText>
-                  <MyOutlinedButton name={"Edit"} action={() => {}} isDisabled={false} />
-                </View>
-              </ActionCard>
+              <TodayMoodNote
+                todayMood={todayMood}
+                setEditMode={() => {
+                  handleEditStatus(true);
+                }}
+                setMoodPtg={setMoodPtg}
+                reset={reset}
+              />
             </>
           ) : moodCard ? (
-            <ActionCard dimension={2} height={2} color={"#2043F4"}>
-              <View style={styles.noteContainer}>
-                <Text style={[styles.title, { width: "90%", marginTop: 20, fontSize: 20 }]}>
-                  Start by selecting your actual mood state percentage
-                </Text>
-
-                <SelectMoodPtg />
-
-                <Text style={[styles.title, { width: "90%", marginTop: 20, fontSize: 20 }]}>
-                  And let’s write down some insights for today!
-                </Text>
-
-                <MyTextInput
-                  style={{
-                    paddingVertical: 30,
-                    paddingHorizontal: 10,
-                    borderColor: "white",
-                    borderWidth: 2,
-                    borderRadius: 10,
-                    marginVertical: 5,
-                  }}
-                  control={control}
-                  name={"moodMessage"}
-                  label="Describe your day in a few words..."
-                />
-
-                <MyOutlinedButton name={"Submit"} action={() => {}} isDisabled={false} />
-              </View>
-            </ActionCard>
+            <RegisterMoodCard
+              control={control}
+              handleRegisterMood={handleRegisterMood}
+              handleSelectMoodPtg={handleSelectMoodPtg}
+              loading={loading}
+            />
           ) : (
-            <ActionCard dimension={2} height={1} color={"#FF4747"}>
-              <View style={styles.noteContainer}>
-                <Text style={[styles.title, { marginTop: 20, fontSize: 12 }]}>Looks like you don’t registered any mood for today?</Text>
-                <ThemedText style={[styles.para, { fontSize: 11, marginBottom: 30 }]}>
-                  Try to be sincerelly about today by clicking the button below.
-                </ThemedText>
-                <MyOutlinedButton name={"Register Mood"} action={() => setMoodCard(true)} isDisabled={false} />
-              </View>
-            </ActionCard>
+            <AddTodayMoodCard
+              setMoodCard={() => {
+                setMoodCard(true);
+              }}
+            />
           )}
 
           <ActionCard dimension={1} height={1} color={"#0BAC00"}>
@@ -155,68 +180,15 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </ActionCard>
 
-          <ActionCard dimension={1} height={1} color={"#8717BF"}>
-            <View style={styles.noteContainer}>
-              <Text style={styles.title}>Excellent Day</Text>
-              <ThemedText style={styles.para}>Mark this day as one of your favourites days ever!</ThemedText>
-              <MyOutlinedButton name={"Save"} action={() => {}} isDisabled={false} />
-            </View>
-          </ActionCard>
+          <SaveToday openSheet={openSheet} />
 
-          <View
-            style={{
-              alignItems: "center",
-              display: "flex",
-              justifyContent: "center",
-              flexDirection: "column",
-              paddingVertical: 10,
-              width: "100%",
-              backgroundColor: "#D58719",
-              borderRadius: 20,
-            }}
-          >
-            <Text style={[styles.title, { fontSize: 13, marginBottom: 5 }]}>Your Weekly Progress</Text>
-            <LineChart
-              data={{
-                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                datasets: [
-                  {
-                    data: [20, 20, 40, 100, 80, 60, 100],
-                    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                    strokeWidth: 3,
-                  },
-                ],
-              }}
-              fromNumber={20}
-              width={screenWidth * 0.85}
-              height={190}
-              yAxisSuffix="%"
-              chartConfig={{
-                backgroundGradientFrom: "#D58719",
-                backgroundGradientTo: "#D58719",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                style: {
-                  borderRadius: 16,
-                },
-                propsForDots: {
-                  r: "3",
-                  strokeWidth: "2",
-                  stroke: "#FFFFFF",
-                },
-                propsForBackgroundLines: {
-                  strokeWidth: 0, // ascunde liniile de fundal
-                },
-              }}
-              bezier
-              style={{
-                marginVertical: 10,
-                borderRadius: 16,
-              }}
-            />
-          </View>
+          <WeekleyStatsCard />
         </ScrollView>
+        <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={["50%"]} enablePanDownToClose={true}>
+          <BottomSheetView style={{ flex: 1, padding: 36, alignItems: "center" }}>
+            <Text>Awesome 🎉</Text>
+          </BottomSheetView>
+        </BottomSheet>
       </SafeAreaView>
     </ThemedView>
   );

@@ -1,5 +1,5 @@
-1. Create Mood register
-2. Make sure that mood level is working
+1. Create Mood register ✅
+2. Make sure that mood level is working ✅
 2. test today mood if still works
 3. Tap for mood boost ai integration
 4. Mood Boost messages in db collection (and hook for create mood boost, read mood boost)
