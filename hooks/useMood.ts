@@ -21,8 +21,6 @@ const useMood = () => {
 
       dispatch(setMoods(registeredMoods));
 
-      console.log(registeredMoods);
-
       return {
         success: true,
         message: "success",

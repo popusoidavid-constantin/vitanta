@@ -1,4 +1,5 @@
 import AddTodayMoodCard from "@/components/cards/AddTodayMoodCard";
+import EditTodayMood from "@/components/cards/EditTodayMood";
 import RegisterMoodCard from "@/components/cards/RegisterMoodCard";
 import SaveToday from "@/components/cards/SaveToday";
 import TodayMoodNote from "@/components/cards/TodayMoodNote";
@@ -15,7 +16,7 @@ import globalStyles from "@/styles/globalStyles";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -70,10 +71,7 @@ const HomeScreen = () => {
     setMoodPtg(value);
   };
   //
-  const handleEditStatus = (value: boolean) => {
-    console.log(value);
-    setEditMode(value);
-  };
+  const handleEditMood = () => {};
   //
   const handleRegisterMood = async () => {
     setLoading(true);
@@ -114,6 +112,16 @@ const HomeScreen = () => {
     bottomSheetRef.current?.snapToIndex(1);
   };
 
+  useEffect(() => {
+    if (editMode && todayMood) {
+      reset({
+        moodMessage: todayMood.note,
+      });
+
+      setMoodPtg(todayMood.score);
+    }
+  }, [editMode, todayMood]);
+
   return (
     <ThemedView style={globalStyles.body}>
       <SafeAreaView style={[globalStyles.safeView, { paddingTop: 0 }]}>
@@ -122,7 +130,7 @@ const HomeScreen = () => {
           contentContainerStyle={styles.mainContainer}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}></RefreshControl>}
         >
-          {todayMood ? (
+          {todayMood && !editMode ? (
             <>
               <TodayMoodPtg
                 size={size}
@@ -133,15 +141,16 @@ const HomeScreen = () => {
                 strokeWidth={strokeWidth}
               />
 
-              <TodayMoodNote
-                todayMood={todayMood}
-                setEditMode={() => {
-                  handleEditStatus(true);
-                }}
-                setMoodPtg={setMoodPtg}
-                reset={reset}
-              />
+              <TodayMoodNote todayMood={todayMood} setEditMode={() => setEditMode(true)} setMoodPtg={setMoodPtg} reset={reset} />
             </>
+          ) : todayMood && editMode ? (
+            <EditTodayMood
+              todayMood={todayMood}
+              loading={loading}
+              handleEditMood={handleEditMood}
+              handleSelectMoodPtg={handleSelectMoodPtg}
+              control={control}
+            />
           ) : moodCard ? (
             <RegisterMoodCard
               control={control}
@@ -150,13 +159,8 @@ const HomeScreen = () => {
               loading={loading}
             />
           ) : (
-            <AddTodayMoodCard
-              setMoodCard={() => {
-                setMoodCard(true);
-              }}
-            />
+            <AddTodayMoodCard setMoodCard={() => setMoodCard(true)} />
           )}
-
           <ActionCard dimension={1} height={1} color={"#0BAC00"}>
             <TouchableOpacity style={{ paddingHorizontal: 10 }}>
               <Text style={styles.title}>Tap For Mood Boost</Text>

@@ -1,8 +1,8 @@
 import colors from "@/utils/colors";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-const SelectMoodPtg = ({ onSelect }: { onSelect: (value: number) => void }) => {
+const SelectMoodPtg = ({ onSelect, value }: { onSelect: (value: number) => void; value?: number }) => {
   const [selected, setSelected] = useState(0); // 0 = nimic selectat
 
   const options = [
@@ -15,11 +15,16 @@ const SelectMoodPtg = ({ onSelect }: { onSelect: (value: number) => void }) => {
 
   const handleSelect = (value: number) => {
     setSelected(value);
-    if (onSelect) {
-      onSelect(value); // aici faci call la API
-    }
+    onSelect(value);
   };
 
+  useEffect(() => {
+    if (value !== undefined) {
+      setSelected(value);
+    }
+  }, [value]);
+
+  console.log(selected);
   return (
     <View
       style={{
