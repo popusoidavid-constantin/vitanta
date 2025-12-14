@@ -1,9 +1,9 @@
-import { auth, db, DB_ID, id, MOOD_REGISTERS_COLLECTION_ID, query } from "@/appwrite";
 import { toMoodRegister } from "@/helpers/dbHelpers";
 import { HookResponse, Mood_Register, Mood_Register_DB } from "@/models/types";
 import { useAppDispatch } from "@/store/hooks";
-import { addMood, setMoods } from "@/store/slices/moodSlice";
+import { addMood, setMoods, updateMood } from "@/store/slices/moodSlice";
 import { useCallback } from "react";
+import { auth, db, DB_ID, id, MOOD_REGISTERS_COLLECTION_ID, query } from "./../appwrite";
 
 const useMood = () => {
   const dispatch = useAppDispatch();
@@ -67,7 +67,43 @@ const useMood = () => {
     }
   }, []);
 
-  return { getMyRegisteredMoods, createRegisterMood };
+  const updateRegisteredMood = useCallback(async (moodId: string, updatedMoodPart: Partial<Mood_Register_DB>): Promise<HookResponse> => {
+    try {
+      if (!moodId && !updatedMoodPart) {
+        return {
+          success: false,
+          data: null,
+          message: "Something went wrong!",
+        };
+      }
+
+      const updateRes = await db.updateRow({
+        databaseId: DB_ID,
+        tableId: MOOD_REGISTERS_COLLECTION_ID,
+        rowId: moodId,
+        data: updatedMoodPart,
+      });
+
+      const mood = toMoodRegister(updateRes);
+
+      dispatch(updateMood(mood));
+
+      return {
+        success: true,
+        data: mood,
+        message: "Succes",
+      };
+    } catch (error: any) {
+      console.log(error);
+      return {
+        success: true,
+        data: null,
+        message: "Succes",
+      };
+    }
+  }, []);
+
+  return { getMyRegisteredMoods, createRegisterMood, updateRegisteredMood };
 };
 
 export default useMood;

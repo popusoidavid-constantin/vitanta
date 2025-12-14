@@ -20,13 +20,13 @@ interface Props {
 
 const EditTodayMood: React.FC<Props> = ({ loading, handleEditMood, control, handleSelectMoodPtg, todayMood }) => {
   return (
-    <ActionCard dimension={2} height={2} color={"#2043F4"}>
+    <ActionCard dimension={2} height={2} color={"#7820f4ff"}>
       {loading ? (
         <Loading />
       ) : (
         <View style={styles.noteContainer}>
           <Text style={[styles.title, { width: "90%", marginTop: 20, fontSize: 20 }]}>
-            Start by selecting your actual mood state percentage
+            Edit your mood today if your day starts to feel different!
           </Text>
 
           <SelectMoodPtg value={todayMood.score} onSelect={handleSelectMoodPtg} />
@@ -44,7 +44,7 @@ const EditTodayMood: React.FC<Props> = ({ loading, handleEditMood, control, hand
             }}
             control={control}
             name={"moodMessage"}
-            label="Describe your day in a few words..."
+            label="What you shared about your day..."
           />
           <MyOutlinedButton name={"Submit"} action={handleEditMood} isDisabled={false} />
         </View>

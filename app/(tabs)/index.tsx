@@ -53,7 +53,7 @@ const HomeScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   //
-  const { createRegisterMood } = useMood();
+  const { createRegisterMood, updateRegisteredMood } = useMood();
   const { getValues, control, handleSubmit, reset } = useForm({
     defaultValues: {
       moodMessage: todayMood?.note || "",
@@ -71,7 +71,25 @@ const HomeScreen = () => {
     setMoodPtg(value);
   };
   //
-  const handleEditMood = () => {};
+  const handleEditMood = async () => {
+    try {
+      setLoading(true);
+
+      const { moodMessage } = getValues();
+
+      const updateRes = await updateRegisteredMood(todayMood?.id as string, { note: moodMessage, score: moodPtg });
+
+      if (!updateRes.success) {
+        Alert.alert("Whoops!", "Something went wrong, try again later!");
+        return;
+      }
+
+      Alert.alert("Uhu!", "Your mood was sucessfully updated!");
+      setEditMode(false);
+    } finally {
+      setLoading(false);
+    }
+  };
   //
   const handleRegisterMood = async () => {
     setLoading(true);
